@@ -86,26 +86,17 @@ app.post('/enrol-bootcamp', async (req, res) => {
 
    // Compose the email  
    let info = await transporter.sendMail({
-
       from: email,
-
       to: 'info@opherlabs.co.za',
-
       subject: 'Enrol bootcamp',
-
       text: ` Thank you for your enrollment of the bootcamp. We will contact you. `,
-
       html: `<p> Thank you for your enrollment of the bootcamp. We will contact you. </p>`,
-
    });
 
    console.log('Message sent: %s', info.messageId);
-
    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 
-
    res.status(200).json({ message: 'Enrolment confirmation successful' });
-
 });
 
 app.listen(1000, () => {
