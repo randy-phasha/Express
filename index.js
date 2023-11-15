@@ -1,17 +1,66 @@
 var express = require('express');
 var nodemailer = require('nodemailer');
+const { Pool } = require('pg');
 var app = express();
 app.use(express.json());
 
-/*
-app.get('/hello', function (req, res) {
-   res.send("Hello world!");
+// Create a PostgreSQL pool
+const pool = new Pool({
+   user: 'postgres',
+   host: 'localhost',
+   database: 'postgres',
+   password: 'adminpass',
+   port: 5432,
 });
 
-app.post('/hello', function (req, res) {
-   res.send("You just called the post method at '/hello'!\n");
+// Function to create the users table if it doesn't existasync 
+async function createUsersTable() {
+   const client = await pool.connect();
+   try {
+      const queryText = `CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username VARCHAR(50) NOT NULL,
+      email VARCHAR(100) NOT NULL)`;
+      await client.query(queryText);
+      console.log('Users table created successfully');
+   } catch (error) {
+      console.error('Error creating users table:', error);
+   } finally { client.release(); }
+} // Call the function to create the table when the application 
+createUsersTable();
+
+app.post('/add-user', async (req, res) => {
+   const { username, email } = req.body;
+   try {
+      const client = await pool.connect();
+      const queryText = 'INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *';
+      const values = [username, email]; const result = await client.query(queryText, values);
+      client.release();
+      res.json({ success: true, user: result.rows[0] });
+   } catch (error) {
+      res.status(500).json({ error: error.message });
+   }
 });
-*/
+
+// Example route to fetch data from PostgreSQL
+app.get('/users', async (req, res) => {
+   try {
+      const client = await pool.connect();
+      //const result = await client.query('SELECT * FROM users');
+      client.release();
+
+      //res.json(result.rows);*/
+      res.status(200).json({ error: 'Success connecting to database' });
+
+   } catch (error) {
+      "Connection terminated unexpectedly"
+      res.status(500).json({ error: error.message });
+   }
+});
+
+const PORT = process.env.PORT || 5432;
+
+app.listen(PORT, () => {
+   console.log(`Server listening on port ${PORT}`);
+});
 
 let nextBootcampDate = null;
 app.post('/set-bootcamp-date', (req, res) => {
@@ -99,6 +148,6 @@ app.post('/enrol-bootcamp', async (req, res) => {
    res.status(200).json({ message: 'Enrolment confirmation successful' });
 });
 
-app.listen(1000, () => {
-   console.log('Server is running at http://localhost:1000');
+app.listen(3500, () => {
+   console.log('Server is running at http://localhost:3500');
 });
