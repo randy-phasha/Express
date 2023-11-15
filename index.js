@@ -32,7 +32,8 @@ app.post('/add-user', async (req, res) => {
    try {
       const client = await pool.connect();
       const queryText = 'INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *';
-      const values = [username, email]; const result = await client.query(queryText, values);
+      const values = [username, email];
+      const result = await client.query(queryText, values);
       client.release();
       res.json({ success: true, user: result.rows[0] });
    } catch (error) {
@@ -63,23 +64,47 @@ app.listen(PORT, () => {
 });
 
 let nextBootcampDate = null;
-app.post('/set-bootcamp-date', (req, res) => {
+app.post('/set-bootcamp-date', async (req, res) => {
    const { date } = req.body;
 
-   if (!date) {
-      return res.status(400).json({ message: 'Date is required.' });
-   }
+   const client = await pool.connect();
+   try {
 
-   nextBootcampDate = date;
-   res.status(200).json({ message: 'Next bootcamp date has been set.' });
+      const queryText = `CREATE TABLE IF NOT EXISTS bootcamp_date (id SERIAL PRIMARY KEY, date VARCHAR(50) NOT NULL)`;
+      await client.query(queryText);
+      console.log('bootcamp_date table created successfully');
+
+      //const insertText = 'INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *';
+
+      const insertText = `INSERT INTO bootcamp_date (date) VALUES ($1) RETURNING *`;
+      const values = [date];
+      const result = await client.query(insertText, values);
+      console.log('bootcamp date inserted successfully');
+      return res.status(200).json({ message: 'Bootcamp date updated successfully.' });
+   } catch (error) {
+      console.error('Error creating bootcamp_date table:', error);
+   } finally { client.release(); }
 });
 
-app.get('/get-bootcamp-date', (req, res) => {
-   if (nextBootcampDate) {
+app.get('/get-bootcamp-date', async (req, res) => {
+   const client = await pool.connect();
+   try {
+      const getText = `SELECT date FROM bootcamp_date`;
+      const result = await client.query(getText);
+      return res.status(200).json({ message: 'Bootcamp date returned successfully.', result });
+   }
+   catch (error) {
+      console.error({ error: error.message });
+   }
+   finally {
+      client.release();
+   }
+
+   /*if (nextBootcampDate) {
       return res.status(200).json({ nextBootcampDate });
    } else {
       return res.status(404).json({ message: 'Next bootcamp date has not been set.' });
-   }
+   }*/
 });
 
 app.post('/send-email', async (req, res) => {
