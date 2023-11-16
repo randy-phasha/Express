@@ -74,8 +74,6 @@ app.post('/set-bootcamp-date', async (req, res) => {
       await client.query(queryText);
       console.log('bootcamp_date table created successfully');
 
-      //const insertText = 'INSERT INTO users (username, email) VALUES ($1, $2) RETURNING *';
-
       const insertText = `INSERT INTO bootcamp_date (date) VALUES ($1) RETURNING *`;
       const values = [date];
       const result = await client.query(insertText, values);
@@ -99,73 +97,89 @@ app.get('/get-bootcamp-date', async (req, res) => {
    finally {
       client.release();
    }
-
-   /*if (nextBootcampDate) {
-      return res.status(200).json({ nextBootcampDate });
-   } else {
-      return res.status(404).json({ message: 'Next bootcamp date has not been set.' });
-   }*/
 });
 
 app.post('/send-email', async (req, res) => {
    const { email, content } = req.body;
 
-   if (!email) {
-      return res.status(400).json({ message: 'Email is required.' });
-   }
+   const client = await pool.connect();
+   try {
+      const queryText = `CREATE TABLE IF NOT EXISTS contact_us (id SERIAL PRIMARY KEY, email VARCHAR(50) NOT NULL, content VARCHAR(100) NOT NULL)`;
+      await client.query(queryText);
+      console.log('contact_us table created successfully');
 
-   // Create a nodemailer transporter using Ethereal's SMTP server  
-   let transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-         user: 'katelynn.zboncak@ethereal.email',
-         pass: '1K4HPZcDzvc9SSXk65',
-      },
-   });
+      const insertText = `INSERT INTO contact_us (email, content) VALUES ($1, $2) RETURNING *`;
+      const values = [email, content];
+      const result = await client.query(insertText, values);
+      console.log('contact us info inserted successfully');
 
-   // Compose the email  
-   let info = await transporter.sendMail({
-      from: email,
-      to: 'info@opherlabs.co.za',
-      subject: 'Contact form',
-      text: ` ${content} `,
-      html: `<p> ${content} </p>`,
-   });
+      // Create a nodemailer transporter using Ethereal's SMTP server  
+      let transporter = nodemailer.createTransport({
+         host: 'smtp.ethereal.email',
+         port: 587,
+         secure: false,
+         auth: {
+            user: 'esmeralda.littel@ethereal.email',
+            pass: '549v3YxGcZwuekHxMv',
+         },
+      });
 
-   console.log('Message sent: %s', info.messageId);
-   console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+      // Compose the email  
+      let info = await transporter.sendMail({
+         from: email,
+         to: 'info@opherlabs.co.za',
+         subject: 'Contact form',
+         text: ` ${content} `,
+         html: `<p> ${content} </p>`,
+      });
 
-   res.status(200).json({ message: 'Next bootcamp date has been set and email sent.' });
+      return res.status(200).json({ message: 'Contact Us info updated successfully.' });
+   } catch (error) {
+      console.error({ error: error.message });
+   } finally { client.release(); }
 });
 
 app.post('/enrol-bootcamp', async (req, res) => {
    const { firstName, lastName, email, phone, dateOfBirth, streetAddress, city, state, zipCode, country, educationLevel, bootcampInterest, coverletter } = req.body;
 
-   if (!email) {
-      return res.status(400).json({ message: 'Email is required.' });
-   }
+   const client = await pool.connect();
+   try {
+      const queryText = `CREATE TABLE IF NOT EXISTS candidate (id SERIAL PRIMARY KEY, firstName VARCHAR(50) NOT NULL, lastName VARCHAR(50) NOT NULL,
+      email VARCHAR(50) NOT NULL, phone VARCHAR(15) NOT NULL, dateOfBirth VARCHAR(15) NOT NULL, streetAddress VARCHAR(50) NOT NULL, city VARCHAR(50) NOT NULL,
+      state VARCHAR(50) NOT NULL, zipCode VARCHAR(10) NOT NULL, country VARCHAR(50) NOT NULL, educationLevel VARCHAR(50) NOT NULL, 
+      bootcampInterest VARCHAR(50) NOT NULL, coverletter VARCHAR(80) )`;
+      await client.query(queryText);
+      console.log('candidate table created successfully');
 
-   // Create a nodemailer transporter using Ethereal's SMTP server  
-   let transporter = nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      secure: false,
-      auth: {
-         user: 'katelynn.zboncak@ethereal.email',
-         pass: '1K4HPZcDzvc9SSXk65',
-      },
-   });
+      const insertText = `INSERT INTO candidate (firstName, lastName, email, phone, dateOfBirth, streetAddress, city, state, zipCode, country, educationLevel, 
+         bootcampInterest, coverletter ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`;
+      const values = [firstName, lastName, email, phone, dateOfBirth, streetAddress, city, state, zipCode, country, educationLevel, bootcampInterest, coverletter];
+      const result = await client.query(insertText, values);
+      console.log('candidate registered');
 
-   // Compose the email  
-   let info = await transporter.sendMail({
-      from: email,
-      to: 'info@opherlabs.co.za',
-      subject: 'Enrol bootcamp',
-      text: ` Thank you for your enrollment of the bootcamp. We will contact you. `,
-      html: `<p> Thank you for your enrollment of the bootcamp. We will contact you. </p>`,
-   });
+      // Create a nodemailer transporter using Ethereal's SMTP server  
+      let transporter = nodemailer.createTransport({
+         host: 'smtp.ethereal.email',
+         port: 587,
+         secure: false,
+         auth: {
+            user: 'esmeralda.littel@ethereal.email',
+            pass: '549v3YxGcZwuekHxMv',
+         },
+      });
+
+      // Compose the email  
+      let info = await transporter.sendMail({
+         from: email,
+         to: 'info@opherlabs.co.za',
+         subject: 'Enrol bootcamp',
+         text: ` Thank you for your enrollment of the bootcamp. We will contact you. `,
+         html: `<p> Thank you for your enrollment of the bootcamp. We will contact you. </p>`,
+      });
+      return res.status(200).json({ message: 'candidate registration completed successfully' });
+   } catch (error) {
+      console.error({ error: error.message });
+   } finally { client.release(); }
 
    console.log('Message sent: %s', info.messageId);
    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
